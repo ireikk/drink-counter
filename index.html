@@ -137,6 +137,60 @@
       .grid4{grid-template-columns:repeat(2,1fr)}
       .drink-grid{grid-template-columns:repeat(2,1fr)}
     }
+
+
+    /* THEME BY STATUS */
+:root{
+  --bg1:#071428;   /* default */
+  --bg2:#0b2336;
+  --card:#0f2233;
+  --accent:#2b79ff;
+  --accent2:#24d18f;
+  --danger:#ff3b30;
+}
+
+/* ページ全体の背景を変数で描画している前提（まだなら下の body も入れて） */
+body{
+  background: radial-gradient(1200px 600px at 20% 10%, var(--bg2), var(--bg1));
+}
+
+/* OK（まだ余裕） */
+body[data-status="ok"]{
+  --bg1:#071428;
+  --bg2:#0b2a2a;
+  --accent:#2b79ff;
+  --accent2:#24d18f;
+}
+
+/* 注意 */
+body[data-status="warn"]{
+  --bg1:#1a1408;
+  --bg2:#2b1f0b;
+  --accent:#ffb020;
+  --accent2:#ffd36a;
+}
+
+/* 上限（STOP） */
+body[data-status="stop"]{
+  --bg1:#1b0a0c;
+  --bg2:#2b0f14;
+  --accent:#ff3b30;
+  --accent2:#ff6b5f;
+}
+
+/* 例：枠やボタンにアクセントを効かせたい場合（既存のクラス名に合わせて調整） */
+.card, .panel{
+  background: color-mix(in srgb, var(--card) 92%, black 8%);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.primary-btn{
+  background: color-mix(in srgb, var(--accent) 85%, black 15%);
+}
+
+.status-bar{
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
   </style>
 </head>
 <body>
@@ -567,3 +621,4 @@ setInterval(renderTop, 15000); // 時刻系は定期更新
 </script>
 </body>
 </html>
+
