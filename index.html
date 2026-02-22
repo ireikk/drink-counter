@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
+  <title>Drink Counter</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;margin:0;background:#0b0f14;color:#e8eef7;}
+    .wrap{max-width:720px;margin:0 auto;padding:18px;}
+    .card{background:#121923;border:1px solid #243142;border-radius:16px;padding:16px;margin:12px 0;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+    .big{font-size:56px;font-weight:900;letter-spacing:1px;}
+    .sub{opacity:.85}
+    button{border:0;border-radius:14px;padding:14px 16px;font-size:16px;font-weight:800;cursor:pointer}
+    .btnPlus{background:#2f81f7;color:#fff;flex:1;min-width:140px}
+    .btnMinus{background:#334155;color:#fff;flex:1;min-width:140px}
+    .btnReset{background:#b91c1c;color:#fff;flex:1;min-width:140px}
+    .pill{padding:10px 12px;border-radius:999px;background:#0f172a;border:1px solid #243142}
+    input{border-radius:12px;border:1px solid #243142;background:#0f172a;color:#e8eef7;padding:10px 12px;font-size:16px;width:90px}
+    .banner{padding:10px 12px;border-radius:14px;margin-top:10px;font-weight:900}
+    .bOk{background:#0b3b2d;border:1px solid #10b981}
+    .bWarn{background:#3a2a05;border:1px solid #f59e0b}
+    .bDanger{background:#3a0a0a;border:1px solid #ef4444}
+    .warn{border-color:#f59e0b}
+    .danger{border-color:#ef4444}
+    .log{max-height:220px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;opacity:.9;white-space:pre}
+    .small{font-size:12px;opacity:.75}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="statusCard">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <div class="sub">Today</div>
+        <div class="big" id="count">0</div>
+        <div class="sub">Limit: <span id="limitText">5</span></div>
+        <div class="small" id="todayKey"></div>
+      </div>
+      <div class="pill">
+        <div class="sub" style="margin-bottom:6px">Set limit</div>
+        <div class="row">
+          <input id="limitInput" type="number" min="1" step="1" value="5">
+          <button onclick="setLimit()" style="background:#334155;color:#fff">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="banner" class="banner bOk">OK</div>
+
+    <div class="row" style="margin-top:12px">
+      <button class="btnPlus" id="plusBtn" onclick="inc()">＋ 1杯</button>
+      <button class="btnMinus" onclick="dec()">− 1杯</button>
+      <button class="btnReset" onclick="resetAll()">リセット</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div style="font-weight:900">Log</div>
+      <button onclick="clearLog()" style="background:#334155;color:#fff">ログ消去</button>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+const keyToday = () => new Date().toISOString().slice(0,10);
+const storageKey = () => `drinkCounter:${keyToday()}`;
+
+function loadState(){
+  const raw = localStorage.getItem(storageKey());
+  if(!raw) return { count: 0, limit: 5, log: [] };
+  try { return JSON.parse(raw); } catch { return { count: 0, limit: 5, log: [] }; }
+}
+function saveState(state){
+  localStorage.setItem(storageKey(), JSON.stringify(state));
+}
+function beep(){
+  if (navigator.vibrate) navigator.vibrate([120, 80, 120]);
+}
+function render(state){
+  document.getElementById("count").textContent = state.count;
+  document.getElementById("limitText").textContent = state.limit;
+  document.getElementById("limitInput").value = state.limit;
+  document.getElementById("todayKey").textContent = keyToday();
+
+  const card = document.getElementById("statusCard");
+  card.classList.remove("warn","danger");
+  const banner = document.getElementById("banner");
+  banner.classList.remove("bOk","bWarn","bDanger");
+
+  const plusBtn = document.getElementById("plusBtn");
+
+  if (state.count < state.limit){
+    banner.textContent = "OK（まだ余裕）";
+    banner.classList.add("bOk");
+    plusBtn.disabled = false;
+    plusBtn.style.opacity = "1";
+  } else if (state.count === state.limit){
+    banner.textContent = "STOP（上限到達）";
+    banner.classList.add("bWarn");
+    card.classList.add("warn");
+    plusBtn.disabled = true;
+    plusBtn.style.opacity = "0.55";
+  } else {
+    banner.textContent = "OVER（超過）";
+    banner.classList.add("bDanger");
+    card.classList.add("danger");
+    plusBtn.disabled = true;
+    plusBtn.style.opacity = "0.55";
+  }
+
+  const logDiv = document.getElementById("log");
+  logDiv.textContent = state.log.length ? state.log.slice().reverse().join("\n") : "(no log)";
+}
+function now(){
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const ss = String(d.getSeconds()).padStart(2,'0');
+  return `${hh}:${mm}:${ss}`;
+}
+function inc(){
+  const s = loadState();
+  if (s.count >= s.limit){ beep(); return; }
+  s.count += 1;
+  s.log.push(`${now()}  +1  -> ${s.count}`);
+  saveState(s);
+  if (s.count === s.limit) beep();
+  render(s);
+}
+function dec(){
+  const s = loadState();
+  s.count = Math.max(0, s.count - 1);
+  s.log.push(`${now()}  -1  -> ${s.count}`);
+  saveState(s);
+  render(s);
+}
+function resetAll(){
+  if(!confirm("カウントを0に戻す？")) return;
+  const s = loadState();
+  s.count = 0;
+  s.log.push(`${now()}  reset -> 0`);
+  saveState(s);
+  render(s);
+}
+function clearLog(){
+  if(!confirm("ログも消す？")) return;
+  const s = loadState();
+  s.log = [];
+  saveState(s);
+  render(s);
+}
+function setLimit(){
+  const s = loadState();
+  let v = parseInt(document.getElementById("limitInput").value || "5", 10);
+  if (!Number.isFinite(v) || v < 1) v = 1;
+  s.limit = v;
+  s.log.push(`${now()}  limit -> ${v}`);
+  saveState(s);
+  beep();
+  render(s);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+render(loadState());
+</script>
+</body>
+</html>
