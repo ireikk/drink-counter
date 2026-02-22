@@ -3,622 +3,1117 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1220" />
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#071428" />
   <title>Drink Counter</title>
+
+  <!-- PWA (既存ファイルがある前提) -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
   <style>
     :root{
-      --bg:#07101d;
-      --card:#0d1b2a;
-      --card2:#0b1625;
-      --text:#e8eef9;
-      --muted:#9fb1c8;
-      --accent:#2b6cff;
-      --danger:#b91c1c;
-      --warn:#b45309;
-      --ok:#15803d;
-      --line:rgba(255,255,255,.08);
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:18px;
+      --bg1:#071428;
+      --bg2:#0b2336;
+      --card:#0f2233;
+      --card2:#0b1a28;
+      --text:#eaf2ff;
+      --muted:rgba(234,242,255,.65);
+
+      --accent:#2b79ff;
+      --accent2:#24d18f;
+      --warn:#ffb020;
+      --danger:#ff3b30;
+
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 22px;
+      --radius2: 16px;
+
+      --border: 1px solid rgba(255,255,255,.08);
+      --border2: 1px solid rgba(255,255,255,.12);
     }
-    *{box-sizing:border-box}
+
+    /* ====== THEME SWITCH (ページ全体の色) ====== */
     body{
-      margin:0; background:linear-gradient(180deg,#061026,#050b16);
-      color:var(--text);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 20% 10%, var(--bg2), var(--bg1));
+      min-height:100vh;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 40px}
-    .top{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
-      padding:18px; border-radius:var(--radius); background:rgba(255,255,255,.03);
-      box-shadow:var(--shadow); border:1px solid var(--line);
+    body[data-status="ok"]{
+      --bg1:#071428;
+      --bg2:#0b2a2a;
+      --accent:#2b79ff;
+      --accent2:#24d18f;
     }
-    .today{
-      display:flex; flex-direction:column; gap:6px;
+    body[data-status="warn"]{
+      --bg1:#1a1408;
+      --bg2:#2b1f0b;
+      --accent:#ffb020;
+      --accent2:#ffd36a;
     }
-    .today .n{font-size:56px; font-weight:800; line-height:1}
-    .today .d{color:var(--muted); font-size:14px}
-    .btnrow{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    body[data-status="stop"]{
+      --bg1:#1b0a0c;
+      --bg2:#2b0f14;
+      --accent:#ff3b30;
+      --accent2:#ff6b5f;
+    }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 22px 16px 40px; }
+    .topCard{
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: var(--border);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+    }
+    .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:stretch; }
+    .row.between{ justify-content:space-between; align-items:center; }
+    .titleBlock{ display:flex; flex-direction:column; gap:4px; }
+    .titleBlock .small{ font-size:12px; color: var(--muted); }
+    .titleBlock .big{ font-size:46px; font-weight:800; line-height:1; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      border: var(--border);
+      color: var(--muted);
+      font-size:12px;
+      backdrop-filter: blur(10px);
+    }
     .btn{
-      border:1px solid var(--line); background:rgba(255,255,255,.04);
-      color:var(--text); padding:10px 12px; border-radius:999px; cursor:pointer;
+      border:0;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 10px 14px;
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      border: var(--border);
       font-weight:700;
+      letter-spacing:.02em;
     }
-    .btn.primary{background:rgba(43,108,255,.18); border-color:rgba(43,108,255,.35)}
-    .btn.danger{background:rgba(185,28,28,.18); border-color:rgba(185,28,28,.35)}
-    .grid4{
-      margin-top:14px;
-      display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: color-mix(in srgb, var(--accent) 85%, black 15%);
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
     }
-    .card{
-      padding:14px; border-radius:var(--radius);
-      background:rgba(255,255,255,.03); border:1px solid var(--line); box-shadow:var(--shadow);
+    .btn.danger{
+      background: color-mix(in srgb, var(--danger) 85%, black 15%);
+      border: 1px solid color-mix(in srgb, var(--danger) 55%, transparent);
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,.06);
+    }
+
+    .kpis{ margin-top: 14px; display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .kpi{
+      border-radius: var(--radius2);
+      padding: 12px 14px;
+      background: rgba(0,0,0,.18);
+      border: var(--border);
       min-height:74px;
     }
-    .card .k{font-size:12px; color:var(--muted)}
-    .card .v{font-size:22px; font-weight:800; margin-top:6px}
-    .status{
-      margin-top:10px;
-      padding:12px 14px; border-radius:14px;
-      border:1px solid var(--line);
+    .kpi .label{ font-size:12px; color: var(--muted); }
+    .kpi .value{ font-size:22px; font-weight:800; margin-top:6px; }
+    .kpi .sub{ font-size:12px; color: var(--muted); margin-top:4px; }
+
+    .statusBar{
+      margin-top: 12px;
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, rgba(255,255,255,.12));
+      background: color-mix(in srgb, var(--accent) 18%, rgba(0,0,0,.20));
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .statusBar .main{ font-weight:900; }
+    .statusBar .note{ font-size:12px; color: var(--muted); }
+
+    .panel{
+      margin-top: 16px;
+      border-radius: 24px;
+      padding: 16px;
+      background: rgba(255,255,255,.04);
+      border: var(--border);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    }
+    .panelHeader{
+      display:flex; justify-content:space-between; align-items:center; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .panelHeader h3{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.08em;
+      color: var(--muted);
       font-weight:800;
     }
-    .status.ok{background:rgba(21,128,61,.18); border-color:rgba(21,128,61,.35)}
-    .status.warn{background:rgba(180,83,9,.18); border-color:rgba(180,83,9,.35)}
-    .status.danger{background:rgba(185,28,28,.18); border-color:rgba(185,28,28,.35)}
-    .hint{margin-top:8px; font-size:12px; color:var(--muted)}
-    .section{
-      margin-top:14px; padding:16px; border-radius:var(--radius);
-      background:rgba(255,255,255,.03); border:1px solid var(--line); box-shadow:var(--shadow);
+
+    /* drink selector */
+    .gridDrinks{ display:grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .tile{
+      border-radius: 18px;
+      padding: 14px 12px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      transition: transform .06s ease;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      min-height:86px;
+      user-select:none;
     }
-    .section h3{margin:0 0 12px; font-size:14px; color:var(--muted); letter-spacing:.02em}
-    .drink-grid{
-      display:grid; grid-template-columns:repeat(5,1fr); gap:10px;
+    .tile:active{ transform: translateY(1px); }
+    .tile .emoji{ font-size:20px; }
+    .tile .name{ font-weight:900; font-size:13px; }
+    .tile .abv{ font-size:12px; color: var(--muted); }
+    .tile.selected{
+      border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,.22));
+      box-shadow: 0 0 0 2px rgba(0,0,0,.12) inset;
     }
-    .drink{
-      padding:14px; border-radius:16px; border:1px solid var(--line);
-      background:rgba(255,255,255,.02); cursor:pointer; text-align:center;
+
+    .gridSizes{ margin-top: 12px; display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .sizeTile{
+      border-radius: 18px;
+      padding: 14px 12px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      user-select:none;
+      display:flex; flex-direction:column; align-items:center; gap:4px;
     }
-    .drink.sel{outline:2px solid rgba(43,108,255,.5); background:rgba(43,108,255,.10)}
-    .drink .emoji{font-size:22px}
-    .drink .name{margin-top:6px; font-weight:900}
-    .drink .abv{margin-top:4px; font-size:12px; color:var(--muted)}
-    .size-grid{
-      display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;
+    .sizeTile .name{ font-weight:900; }
+    .sizeTile .ml{ font-size:12px; color: var(--muted); }
+    .sizeTile.selected{
+      border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,.22));
     }
-    .sz{
-      padding:14px; border-radius:16px; border:1px solid var(--line);
-      background:rgba(255,255,255,.02); cursor:pointer; text-align:center;
+
+    .actions{ display:flex; gap:12px; margin-top: 12px; }
+
+    /* log table */
+    .logWrap{ margin-top: 14px; }
+    table{ width:100%; border-collapse: collapse; overflow:hidden; border-radius: 16px; }
+    thead th{
+      text-align:left;
+      font-size:12px;
+      color: var(--muted);
+      font-weight:900;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    tbody td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size:13px;
+    }
+    tbody tr:last-child td{ border-bottom: 0; }
+    .right{ text-align:right; }
+    .center{ text-align:center; }
+    .miniBtn{
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-weight:900;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+    }
+    .miniBtn.danger{
+      background: rgba(255,59,48,.18);
+      border-color: rgba(255,59,48,.35);
+    }
+    .muted{ color: var(--muted); }
+
+    /* calendar */
+    .calHeader{
+      display:flex; justify-content:space-between; align-items:center; gap: 10px;
+      margin: 6px 0 10px;
+    }
+    .calHeader .monthLabel{
+      font-weight:900;
+      letter-spacing:.04em;
+    }
+    .calGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+    .dow{
+      font-size:12px;
+      color: var(--muted);
+      font-weight:800;
+      text-align:center;
+      padding: 4px 0 2px;
+    }
+    .dayCell{
+      border-radius: 16px;
+      min-height: 76px;
+      padding: 10px 10px 8px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      position: relative;
+      user-select:none;
+    }
+    .dayCell:hover{ border-color: rgba(255,255,255,.14); }
+    .dayNum{
+      font-weight:900;
+      font-size:14px;
+      opacity: .95;
+    }
+    .badges{
+      position:absolute;
+      right:10px;
+      top:10px;
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      border: 1px solid rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+    }
+    .badge{
+      font-size:11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
       font-weight:900;
     }
-    .sz.sel{outline:2px solid rgba(43,108,255,.5); background:rgba(43,108,255,.10)}
-    .sz small{display:block; margin-top:6px; color:var(--muted); font-weight:600}
-    .actions{
-      display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;
+    .dayFooter{
+      position:absolute;
+      left:10px;
+      bottom:8px;
+      font-size:12px;
+      color: var(--muted);
     }
-    .actions .btn{border-radius:14px; padding:12px 14px}
-    table{width:100%; border-collapse:collapse; font-size:13px}
-    th,td{padding:10px 8px; border-bottom:1px solid var(--line); color:var(--text)}
-    th{color:var(--muted); text-align:left; font-weight:800}
-    td.right{text-align:right}
-    .pill{
-      padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.04); border:1px solid var(--line);
-      font-size:12px; color:var(--muted); font-weight:800;
-    }
-    .modal-back{
-      position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center;
-      padding:18px;
+
+    .modalBackdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
     }
     .modal{
-      width:min(560px,100%);
-      background:rgba(12,22,36,.98);
-      border:1px solid var(--line);
-      border-radius:22px;
-      box-shadow:0 20px 60px rgba(0,0,0,.55);
-      padding:16px;
+      width: min(520px, 100%);
+      border-radius: 20px;
+      background: rgba(12,20,30,.95);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      padding: 16px;
+      backdrop-filter: blur(14px);
     }
-    .modal h2{margin:0 0 12px; font-size:16px}
-    .form{
-      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    .modal h4{ margin:0 0 10px; font-size:14px; color: var(--muted); letter-spacing:.06em; }
+    .modal .bigDate{ font-size:20px; font-weight:900; margin-bottom: 12px; }
+    .segRow{ display:flex; gap: 10px; }
+    .seg{
+      flex:1;
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      text-align:center;
+      font-weight:900;
+      color: var(--muted);
+      user-select:none;
+    }
+    .seg.selected{
+      color: var(--text);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, rgba(0,0,0,.25));
+    }
+    .modalActions{ display:flex; gap: 10px; justify-content:flex-end; margin-top: 12px; }
+
+    .settingsRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
     }
     .field{
-      background:rgba(255,255,255,.03);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 10px;
     }
-    .field label{display:block; font-size:12px; color:var(--muted); font-weight:800; margin-bottom:8px}
+    .field label{ display:block; font-size:12px; color: var(--muted); font-weight:900; margin-bottom: 6px; }
     .field input{
-      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(0,0,0,.2); color:var(--text); font-size:16px; font-weight:800;
+      width:100%;
+      font-size:16px;
+      font-weight:900;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
     }
-    .modal .actions{justify-content:flex-end}
-    @media (max-width:820px){
-      .grid4{grid-template-columns:repeat(2,1fr)}
-      .drink-grid{grid-template-columns:repeat(2,1fr)}
+
+    @media (max-width: 940px){
+      .kpis{ grid-template-columns: repeat(2, 1fr); }
+      .gridDrinks{ grid-template-columns: repeat(3, 1fr); }
     }
-
-
-    /* THEME BY STATUS */
-:root{
-  --bg1:#071428;   /* default */
-  --bg2:#0b2336;
-  --card:#0f2233;
-  --accent:#2b79ff;
-  --accent2:#24d18f;
-  --danger:#ff3b30;
-}
-
-/* ページ全体の背景を変数で描画している前提（まだなら下の body も入れて） */
-body{
-  background: radial-gradient(1200px 600px at 20% 10%, var(--bg2), var(--bg1));
-}
-
-/* OK（まだ余裕） */
-body[data-status="ok"]{
-  --bg1:#071428;
-  --bg2:#0b2a2a;
-  --accent:#2b79ff;
-  --accent2:#24d18f;
-}
-
-/* 注意 */
-body[data-status="warn"]{
-  --bg1:#1a1408;
-  --bg2:#2b1f0b;
-  --accent:#ffb020;
-  --accent2:#ffd36a;
-}
-
-/* 上限（STOP） */
-body[data-status="stop"]{
-  --bg1:#1b0a0c;
-  --bg2:#2b0f14;
-  --accent:#ff3b30;
-  --accent2:#ff6b5f;
-}
-
-/* 例：枠やボタンにアクセントを効かせたい場合（既存のクラス名に合わせて調整） */
-.card, .panel{
-  background: color-mix(in srgb, var(--card) 92%, black 8%);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-}
-
-.primary-btn{
-  background: color-mix(in srgb, var(--accent) 85%, black 15%);
-}
-
-.status-bar{
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-}
+    @media (max-width: 520px){
+      .titleBlock .big{ font-size:40px; }
+      .gridDrinks{ grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
-<body>
-<div class="wrap">
 
-  <div class="top">
-    <div class="today">
-      <div class="k">Today</div>
-      <div class="n" id="todayCount">0</div>
-      <div class="d" id="todayDate">--</div>
-    </div>
-    <div class="btnrow">
-      <button class="btn primary" id="openSettings">設定</button>
-      <span class="pill" id="ratePill">分解速度: 7 g/時</span>
-      <button class="btn danger" id="resetToday">今日をリセット</button>
-    </div>
-  </div>
-
-  <div class="grid4">
-    <div class="card"><div class="k">直近の入力時刻</div><div class="v" id="lastTime">--:--</div></div>
-    <div class="card"><div class="k">前回からの経過</div><div class="v" id="sinceLast">--</div></div>
-    <div class="card"><div class="k">今日の累計アルコール</div><div class="v" id="todayGrams">0.0 g</div></div>
-    <div class="card"><div class="k">分解完了予定</div><div class="v" id="finishAt">--:--</div></div>
-  </div>
-
-  <div class="status ok" id="statusBar">OK（まだ余裕）</div>
-  <div class="hint" id="hintText">
-    目安：純アルコール(g) = ml × 度数 × 0.789 / 100（設定で分解速度・しきい値を変更できます）
-  </div>
-
-  <div class="section">
-    <h3>登録（アイコンで選ぶ）</h3>
-    <div class="drink-grid" id="drinkGrid"></div>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px;flex-wrap:wrap">
-      <div class="pill" id="oneCupPill">1杯のアルコール: 0.0 g</div>
-      <div class="pill">S（ミニ）/ M（ジョッキ）/ L（メガ or 瓶）</div>
-    </div>
-
-    <div class="size-grid" id="sizeGrid"></div>
-
-    <div class="actions">
-      <button class="btn primary" id="addBtn">＋ 追加</button>
-      <button class="btn" id="undoBtn">取り消し</button>
-    </div>
-  </div>
-
-  <div class="section">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-      <h3 style="margin:0">Log（今日）</h3>
-      <button class="btn danger" id="clearLog">ログ消去</button>
-    </div>
-    <div style="overflow:auto;margin-top:8px">
-      <table>
-        <thead>
-          <tr>
-            <th>時刻</th>
-            <th>内容</th>
-            <th class="right">g</th>
-            <th class="right">前回から</th>
-            <th class="right">削除</th>
-          </tr>
-        </thead>
-        <tbody id="logBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="section" id="calendarSection" style="display:none">
-    <!-- Phase2以降で使う予定。今は温存 -->
-  </div>
-
-</div>
-
-<!-- Settings Modal -->
-<div class="modal-back" id="modalBack" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="設定">
-    <h2>設定（しきい値＆分解速度）</h2>
-    <div class="form">
-      <div class="field">
-        <label>分解速度（g/時）</label>
-        <input type="number" id="setRate" step="0.1" min="1" max="20" />
+<body data-status="ok">
+  <div class="wrap">
+    <div class="topCard">
+      <div class="row between">
+        <div class="titleBlock">
+          <div class="small">Today</div>
+          <div class="big" id="todayCount">0</div>
+          <div class="small" id="todayDate">----</div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <span class="pill" id="ratePill">分解速度: 7 g/時</span>
+          <button class="btn ghost" id="openSettings">設定</button>
+          <button class="btn ghost" id="resetToday">今日をリセット</button>
+        </div>
       </div>
-      <div class="field">
-        <label>適量（g超で表示が変わる）</label>
-        <input type="number" id="thOk" step="1" min="0" />
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">直近の入力時刻</div>
+          <div class="value" id="lastTime">--:--</div>
+          <div class="sub muted" id="lastTimeSub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="label">前回からの経過</div>
+          <div class="value" id="elapsed">--</div>
+          <div class="sub muted" id="elapsedSub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="label">今日の累計アルコール</div>
+          <div class="value" id="totalG">0.0 g</div>
+          <div class="sub muted" id="totalGSub">--</div>
+        </div>
+        <div class="kpi">
+          <div class="label">消費完了予定</div>
+          <div class="value" id="finishAt">--:--</div>
+          <div class="sub muted" id="finishAtSub">--</div>
+        </div>
       </div>
-      <div class="field">
-        <label>注意（g超で表示が変わる）</label>
-        <input type="number" id="thWarn" step="1" min="0" />
-      </div>
-      <div class="field">
-        <label>上限（g超で STOP）</label>
-        <input type="number" id="thStop" step="1" min="0" />
+
+      <div class="statusBar" id="statusBar">
+        <div class="main" id="statusMain">OK（まだ余裕）</div>
+        <div class="note" id="statusNote">
+          目安: 純アルコール(g) = ml × 度数 × 0.789 / 100。分解速度は設定で変更できます。
+        </div>
       </div>
     </div>
-    <div class="hint" style="margin-top:10px">
-      ※値は端末に保存されます（localStorage）。店や体調で調整できるようにしています。
+
+    <div class="panel">
+      <div class="panelHeader">
+        <h3>登録（アイコンで選ぶ）</h3>
+        <span class="pill" id="oneDrinkPill">1杯のアルコール: -- g</span>
+      </div>
+
+      <div class="gridDrinks" id="drinkGrid"></div>
+
+      <div class="panelHeader" style="margin-top:12px">
+        <h3>量</h3>
+        <span class="pill">S（ミニ）/ M（ジョッキ）/ L（メガor瓶）</span>
+      </div>
+      <div class="gridSizes" id="sizeGrid"></div>
+
+      <div class="actions">
+        <button class="btn primary" id="addBtn">＋ 追加</button>
+        <button class="btn ghost" id="undoBtn">取り消し</button>
+      </div>
     </div>
-    <div class="actions">
-      <button class="btn" id="closeSettings">閉じる</button>
-      <button class="btn primary" id="saveSettings">保存</button>
+
+    <div class="panel">
+      <div class="panelHeader">
+        <h3>Log（今日）</h3>
+        <button class="btn danger" id="clearLog">ログ消去</button>
+      </div>
+
+      <div class="logWrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px">時刻</th>
+              <th>内容</th>
+              <th class="right" style="width:90px">g</th>
+              <th class="center" style="width:90px">前回から</th>
+              <th class="center" style="width:90px">削除</th>
+            </tr>
+          </thead>
+          <tbody id="logBody">
+            <tr><td colspan="5" class="muted">（no log）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panelHeader">
+        <h3>Log（カレンダー）</h3>
+        <span class="pill">●＝酒量（緑/黄/赤）　数字＝二日酔い（0〜3）　タップで入力</span>
+      </div>
+
+      <div class="calHeader">
+        <div class="monthLabel" id="monthLabel">----</div>
+        <div class="row" style="gap:10px">
+          <button class="btn ghost" id="prevMonth">←</button>
+          <button class="btn ghost" id="thisMonth">今月</button>
+          <button class="btn ghost" id="nextMonth">→</button>
+        </div>
+      </div>
+
+      <div class="calGrid" id="calDow"></div>
+      <div class="calGrid" id="calGrid"></div>
     </div>
   </div>
-</div>
 
-<script>
-/** ====== PWA SW ====== */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+  <!-- Modal: hangover input -->
+  <div class="modalBackdrop" id="modalBackdrop">
+    <div class="modal">
+      <h4>二日酔い（0〜3）</h4>
+      <div class="bigDate" id="modalDate">----</div>
+      <div class="segRow" id="hangoverSeg"></div>
+      <div class="modalActions">
+        <button class="btn ghost" id="modalCancel">キャンセル</button>
+        <button class="btn primary" id="modalSave">保存</button>
+        <button class="btn danger" id="modalClear">消去</button>
+      </div>
+    </div>
+  </div>
 
-/** ====== Data & Defaults ====== */
-const STORAGE_KEY = "drink_counter_v2";
+  <!-- Modal: settings -->
+  <div class="modalBackdrop" id="settingsBackdrop">
+    <div class="modal">
+      <h4>設定</h4>
+      <div class="bigDate">しきい値＆分解速度</div>
 
-const DRINKS = [
-  { id:"beer",     name:"ビール",     emoji:"🍺", abv:5.0 },
-  { id:"highball", name:"ハイボール", emoji:"🧊", abv:7.0 },
-  { id:"wine",     name:"ワイン",     emoji:"🍷", abv:12.0 },
-  { id:"craft",    name:"クラフト",   emoji:"🍺✨", abv:6.5 },
-  { id:"brandy",   name:"ブランデー", emoji:"🥃✨", abv:40.0 },
-];
+      <div class="settingsRow">
+        <div class="field">
+          <label>適量（g以上で色変化）</label>
+          <input id="thOk" type="number" min="0" step="1" />
+        </div>
+        <div class="field">
+          <label>注意（g以上で色変化）</label>
+          <input id="thWarn" type="number" min="0" step="1" />
+        </div>
+        <div class="field">
+          <label>上限（g以上でSTOP）</label>
+          <input id="thStop" type="number" min="0" step="1" />
+        </div>
+      </div>
 
-// 表示はS/M/L固定（質問の指定どおり）
-const SIZES = [
-  { id:"S", label:"S（ミニ）", ml:250 },
-  { id:"M", label:"M（ジョッキ）", ml:350 },
-  { id:"L", label:"L（メガ/瓶）", ml:500 },
-];
+      <div class="settingsRow" style="grid-template-columns: 1fr 1fr;">
+        <div class="field">
+          <label>分解速度（g/時）</label>
+          <input id="rate" type="number" min="1" step="0.5" />
+        </div>
+        <div class="field">
+          <label>飲み会の目安（任意：運転は自己責任）</label>
+          <input id="noteDrive" type="text" placeholder="例：運転は翌朝以降" />
+        </div>
+      </div>
 
-// 初期の仮置き（ユーザー指定）
-const DEFAULT_SETTINGS = {
-  rate_g_per_h: 7.0,
-  th_ok: 30,    // 例：適量の上
-  th_warn: 60,  // 例：注意
-  th_stop: 90,  // 例：上限
-};
+      <div class="modalActions">
+        <button class="btn ghost" id="settingsCancel">閉じる</button>
+        <button class="btn primary" id="settingsSave">保存</button>
+      </div>
+    </div>
+  </div>
 
-function todayKey(d = new Date()){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const da = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${da}`;
-}
+  <script>
+    // ====== Data Model ======
+    const DRINKS = [
+      { key:"beer",     name:"ビール",     emoji:"🍺", abv:5.0 },
+      { key:"highball", name:"ハイボール", emoji:"🥃", abv:7.0 },
+      { key:"wine",     name:"ワイン",     emoji:"🍷", abv:12.0 },
+      { key:"craft",    name:"クラフト",   emoji:"🍺✨", abv:6.5 },
+      { key:"brandy",   name:"ブランデー", emoji:"🥃✨", abv:40.0 },
+    ];
 
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return { settings:{...DEFAULT_SETTINGS}, logsByDate:{} };
-    const st = JSON.parse(raw);
-    // migrate / fill defaults
-    st.settings = { ...DEFAULT_SETTINGS, ...(st.settings||{}) };
-    st.logsByDate = st.logsByDate || {};
-    return st;
-  }catch{
-    return { settings:{...DEFAULT_SETTINGS}, logsByDate:{} };
-  }
-}
+    // サイズ（あなたのUIに合わせて：S=250 / M=350 / L=500）
+    const SIZES = [
+      { key:"S", label:"S（ミニ）", ml:250 },
+      { key:"M", label:"M（ジョッキ）", ml:350 },
+      { key:"L", label:"L（メガ/瓶）", ml:500 },
+    ];
 
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+    // storage keys
+    const LS = {
+      settings: "dc_settings_v2",
+      logs: "dc_logs_v2",          // { "YYYY-MM-DD": [ {ts, drinkKey, sizeKey, ml, abv, g} ] }
+      hangover: "dc_hangover_v2",  // { "YYYY-MM-DD": 0..3 }
+      calendarMonth: "dc_calendar_month_v2"
+    };
 
-let state = loadState();
-let selectedDrinkId = "highball";
-let selectedSizeId = "M";
+    function todayKey(d=new Date()){
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    }
+    function fmtHM(d){
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      return `${hh}:${mm}`;
+    }
+    function fmtYMDJP(ymd){
+      const [y,m,d] = ymd.split("-");
+      return `${y}年${Number(m)}月${Number(d)}日`;
+    }
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
 
-/** ====== Utils ====== */
-function fmtTime(d){
-  const hh = String(d.getHours()).padStart(2,'0');
-  const mm = String(d.getMinutes()).padStart(2,'0');
-  return `${hh}:${mm}`;
-}
-function diffMin(a,b){
-  const ms = a - b;
-  return Math.max(0, Math.round(ms/60000));
-}
-function alcoholGrams(ml, abv){
-  // g = ml × 度数 × 0.789 / 100
-  return (ml * abv * 0.789) / 100.0;
-}
-function getTodayLogs(){
-  const k = todayKey();
-  return state.logsByDate[k] || [];
-}
-function setTodayLogs(list){
-  const k = todayKey();
-  state.logsByDate[k] = list;
-  saveState();
-}
-function sumGrams(list){
-  return list.reduce((s,x)=>s+(x.grams||0),0);
-}
-function now(){ return new Date(); }
+    function loadSettings(){
+      const def = {
+        thOk: 20,    // 適量
+        thWarn: 50,  // 注意
+        thStop: 80,  // 上限
+        rate: 7,     // g/時（安全寄り）
+        noteDrive: ""
+      };
+      try{
+        const x = JSON.parse(localStorage.getItem(LS.settings) || "null");
+        if(!x) return def;
+        return { ...def, ...x };
+      }catch(e){ return def; }
+    }
+    function saveSettings(s){
+      localStorage.setItem(LS.settings, JSON.stringify(s));
+    }
 
-/** ====== UI Render ====== */
-const el = (id)=>document.getElementById(id);
+    function loadLogs(){
+      try{
+        return JSON.parse(localStorage.getItem(LS.logs) || "{}");
+      }catch(e){ return {}; }
+    }
+    function saveLogs(all){
+      localStorage.setItem(LS.logs, JSON.stringify(all));
+    }
 
-function renderDrinkGrid(){
-  const g = el("drinkGrid");
-  g.innerHTML = "";
-  DRINKS.forEach(d=>{
-    const div = document.createElement("div");
-    div.className = "drink" + (d.id===selectedDrinkId ? " sel":"");
-    div.innerHTML = `
-      <div class="emoji">${d.emoji}</div>
-      <div class="name">${d.name}</div>
-      <div class="abv">${d.abv}%</div>
-    `;
-    div.onclick = ()=>{ selectedDrinkId=d.id; renderAll(); };
-    g.appendChild(div);
-  });
-}
+    function loadHangover(){
+      try{
+        return JSON.parse(localStorage.getItem(LS.hangover) || "{}");
+      }catch(e){ return {}; }
+    }
+    function saveHangover(all){
+      localStorage.setItem(LS.hangover, JSON.stringify(all));
+    }
 
-function renderSizeGrid(){
-  const g = el("sizeGrid");
-  g.innerHTML = "";
-  SIZES.forEach(s=>{
-    const div = document.createElement("div");
-    div.className = "sz" + (s.id===selectedSizeId ? " sel":"");
-    div.innerHTML = `${s.label}<small>${s.ml} ml</small>`;
-    div.onclick = ()=>{ selectedSizeId=s.id; renderAll(); };
-    g.appendChild(div);
-  });
-}
+    function pureAlcoholG(ml, abv){
+      // 純アルコール(g) = ml × 度数 × 0.789 / 100
+      return (ml * abv * 0.789 / 100);
+    }
 
-function statusFor(totalG){
-  const { th_ok, th_warn, th_stop } = state.settings;
-  if(totalG >= th_stop) return { cls:"danger", text:"上限到達（これ以上は危険）" };
-  if(totalG >= th_warn) return { cls:"warn", text:"注意（ペース落とす）" };
-  if(totalG >= th_ok) return { cls:"ok", text:"適量ゾーン（まだOK）" };
-  return { cls:"ok", text:"OK（まだ余裕）" };
-}
+    // ====== State ======
+    let settings = loadSettings();
+    let logsByDay = loadLogs();
+    let hangoverByDay = loadHangover();
 
-function computeFinishAt(totalG){
-  const rate = state.settings.rate_g_per_h;
-  if(totalG <= 0) return null;
-  const hours = totalG / Math.max(0.1, rate);
-  const ms = hours * 3600 * 1000;
-  return new Date(Date.now() + ms);
-}
+    let selectedDrinkKey = "highball";
+    let selectedSizeKey = "M";
+    let lastAddedId = null;
 
-function renderTop(){
-  const t = now();
-  el("todayDate").textContent = todayKey(t);
+    // Calendar state
+    let calCursor = (() => {
+      const saved = localStorage.getItem(LS.calendarMonth);
+      if(saved){
+        const [y,m] = saved.split("-").map(Number);
+        if(y && m) return new Date(y, m-1, 1);
+      }
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    })();
 
-  const logs = getTodayLogs();
-  el("todayCount").textContent = String(logs.length);
+    // ====== Elements ======
+    const elTodayCount = document.getElementById("todayCount");
+    const elTodayDate  = document.getElementById("todayDate");
+    const elRatePill   = document.getElementById("ratePill");
 
-  const total = sumGrams(logs);
-  el("todayGrams").textContent = `${total.toFixed(1)} g`;
+    const elLastTime   = document.getElementById("lastTime");
+    const elLastTimeSub= document.getElementById("lastTimeSub");
+    const elElapsed    = document.getElementById("elapsed");
+    const elElapsedSub = document.getElementById("elapsedSub");
+    const elTotalG     = document.getElementById("totalG");
+    const elTotalGSub  = document.getElementById("totalGSub");
+    const elFinishAt   = document.getElementById("finishAt");
+    const elFinishAtSub= document.getElementById("finishAtSub");
 
-  // last time & since last
-  if(logs.length===0){
-    el("lastTime").textContent = "--:--";
-    el("sinceLast").textContent = "--";
-  }else{
-    const last = logs[logs.length-1];
-    const lastD = new Date(last.ts);
-    el("lastTime").textContent = fmtTime(lastD);
-    const prev = logs.length>=2 ? new Date(logs[logs.length-2].ts) : null;
-    el("sinceLast").textContent = prev ? `${diffMin(lastD, prev)}分` : "--";
-  }
+    const elStatusMain = document.getElementById("statusMain");
+    const elOneDrinkPill = document.getElementById("oneDrinkPill");
 
-  // finish time
-  const fin = computeFinishAt(total);
-  el("finishAt").textContent = fin ? fmtTime(fin) : "--:--";
+    const elDrinkGrid  = document.getElementById("drinkGrid");
+    const elSizeGrid   = document.getElementById("sizeGrid");
+    const elLogBody    = document.getElementById("logBody");
 
-  // status
-  const st = statusFor(total);
-  const sb = el("statusBar");
-  sb.className = `status ${st.cls}`;
-  sb.textContent = st.text;
+    const btnAdd = document.getElementById("addBtn");
+    const btnUndo= document.getElementById("undoBtn");
+    const btnResetToday = document.getElementById("resetToday");
+    const btnClearLog = document.getElementById("clearLog");
 
-  // rate pill
-  el("ratePill").textContent = `分解速度: ${state.settings.rate_g_per_h} g/時`;
-}
+    // modal hangover
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const elModalDate = document.getElementById("modalDate");
+    const elHangoverSeg = document.getElementById("hangoverSeg");
+    const btnModalCancel = document.getElementById("modalCancel");
+    const btnModalSave = document.getElementById("modalSave");
+    const btnModalClear = document.getElementById("modalClear");
+    let modalTargetDay = null;
+    let modalSelectedHangover = null;
 
-function renderOneCup(){
-  const drink = DRINKS.find(x=>x.id===selectedDrinkId);
-  const size = SIZES.find(x=>x.id===selectedSizeId);
-  const g = alcoholGrams(size.ml, drink.abv);
-  el("oneCupPill").textContent = `1杯のアルコール: ${g.toFixed(1)} g`;
-}
+    // settings modal
+    const btnOpenSettings = document.getElementById("openSettings");
+    const settingsBackdrop = document.getElementById("settingsBackdrop");
+    const inputThOk = document.getElementById("thOk");
+    const inputThWarn = document.getElementById("thWarn");
+    const inputThStop = document.getElementById("thStop");
+    const inputRate = document.getElementById("rate");
+    const inputNoteDrive = document.getElementById("noteDrive");
+    const btnSettingsCancel = document.getElementById("settingsCancel");
+    const btnSettingsSave = document.getElementById("settingsSave");
 
-function renderLog(){
-  const logs = getTodayLogs();
-  const tb = el("logBody");
-  tb.innerHTML = "";
+    // calendar elements
+    const elMonthLabel = document.getElementById("monthLabel");
+    const elCalDow = document.getElementById("calDow");
+    const elCalGrid = document.getElementById("calGrid");
+    const btnPrevMonth = document.getElementById("prevMonth");
+    const btnNextMonth = document.getElementById("nextMonth");
+    const btnThisMonth = document.getElementById("thisMonth");
 
-  if(logs.length===0){
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="color:var(--muted);padding:14px">（no log）</td>`;
-    tb.appendChild(tr);
-    return;
-  }
+    // ====== Renderers ======
+    function renderDrinkTiles(){
+      elDrinkGrid.innerHTML = "";
+      DRINKS.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "tile" + (d.key === selectedDrinkKey ? " selected" : "");
+        div.innerHTML = `
+          <div class="emoji">${d.emoji}</div>
+          <div class="name">${d.name}</div>
+          <div class="abv">${d.abv}%</div>
+        `;
+        div.onclick = () => {
+          selectedDrinkKey = d.key;
+          renderDrinkTiles();
+          renderOneDrink();
+        };
+        elDrinkGrid.appendChild(div);
+      });
+    }
 
-  logs.forEach((x,idx)=>{
-    const tr = document.createElement("tr");
-    const d = new Date(x.ts);
-    const prev = idx>0 ? new Date(logs[idx-1].ts) : null;
-    const since = prev ? `${diffMin(d, prev)}分` : "--";
+    function renderSizeTiles(){
+      elSizeGrid.innerHTML = "";
+      SIZES.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "sizeTile" + (s.key === selectedSizeKey ? " selected" : "");
+        div.innerHTML = `
+          <div class="name">${s.label}</div>
+          <div class="ml">${s.ml} ml</div>
+        `;
+        div.onclick = () => {
+          selectedSizeKey = s.key;
+          renderSizeTiles();
+          renderOneDrink();
+        };
+        elSizeGrid.appendChild(div);
+      });
+    }
 
-    tr.innerHTML = `
-      <td>${fmtTime(d)}</td>
-      <td>${x.emoji} ${x.name} / ${x.sizeLabel} (${x.ml}ml・${x.abv}%)</td>
-      <td class="right"><b>${(x.grams||0).toFixed(1)}</b> g</td>
-      <td class="right">${since}</td>
-      <td class="right"><button class="btn" style="padding:8px 10px;border-radius:12px" data-del="${idx}">削除</button></td>
-    `;
-    tb.appendChild(tr);
-  });
+    function getTodayLogs(){
+      const key = todayKey();
+      return logsByDay[key] || [];
+    }
 
-  tb.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const i = Number(btn.getAttribute("data-del"));
+    function renderTop(){
+      const key = todayKey();
+      const now = new Date();
       const logs = getTodayLogs();
-      logs.splice(i,1);
-      setTodayLogs(logs);
-      renderAll();
-    });
-  });
-}
 
-function renderAll(){
-  renderDrinkGrid();
-  renderSizeGrid();
-  renderOneCup();
-  renderTop();
-  renderLog();
-}
+      elTodayDate.textContent = key;
+      elTodayCount.textContent = String(logs.length);
 
-/** ====== Actions ====== */
-el("addBtn").addEventListener("click", ()=>{
-  const drink = DRINKS.find(x=>x.id===selectedDrinkId);
-  const size = SIZES.find(x=>x.id===selectedSizeId);
-  const g = alcoholGrams(size.ml, drink.abv);
+      elRatePill.textContent = `分解速度: ${settings.rate} g/時`;
 
-  const logs = getTodayLogs();
-  logs.push({
-    ts: Date.now(),
-    drinkId: drink.id,
-    name: drink.name,
-    emoji: drink.emoji,
-    abv: drink.abv,
-    sizeId: size.id,
-    sizeLabel: size.label,
-    ml: size.ml,
-    grams: g
-  });
-  setTodayLogs(logs);
-  renderAll();
-});
+      // totals
+      const totalG = logs.reduce((a,x)=>a + x.g, 0);
+      elTotalG.textContent = `${totalG.toFixed(1)} g`;
+      elTotalGSub.textContent = `しきい値: 適量${settings.thOk} / 注意${settings.thWarn} / 上限${settings.thStop} g`;
 
-el("undoBtn").addEventListener("click", ()=>{
-  const logs = getTodayLogs();
-  if(logs.length===0) return;
-  logs.pop();
-  setTodayLogs(logs);
-  renderAll();
-});
+      // last time & elapsed
+      if(logs.length === 0){
+        elLastTime.textContent = "--:--";
+        elLastTimeSub.textContent = "（入力なし）";
+        elElapsed.textContent = "--";
+        elElapsedSub.textContent = "--";
+      }else{
+        const last = logs[logs.length - 1];
+        const lastDate = new Date(last.ts);
+        elLastTime.textContent = fmtHM(lastDate);
+        elLastTimeSub.textContent = fmtYMDJP(key);
 
-el("clearLog").addEventListener("click", ()=>{
-  if(!confirm("今日のログを全消去しますか？")) return;
-  setTodayLogs([]);
-  renderAll();
-});
+        const diffMin = Math.max(0, Math.round((now - lastDate)/60000));
+        elElapsed.textContent = `${diffMin}分`;
+        elElapsedSub.textContent = diffMin < 60 ? "—" : `${Math.floor(diffMin/60)}時間${diffMin%60}分`;
+      }
 
-el("resetToday").addEventListener("click", ()=>{
-  if(!confirm("今日の記録をリセットしますか？")) return;
-  setTodayLogs([]);
-  renderAll();
-});
+      // finish time estimate
+      const hours = totalG / Math.max(0.1, settings.rate);
+      const finish = new Date(now.getTime() + hours * 3600 * 1000);
+      elFinishAt.textContent = logs.length ? fmtHM(finish) : "--:--";
+      elFinishAtSub.textContent = logs.length ? `約${Math.ceil(hours*60)}分後に消費目安` : "—";
 
-/** ====== Settings Modal ====== */
-const modalBack = el("modalBack");
-function openModal(){
-  // set current values
-  el("setRate").value = state.settings.rate_g_per_h;
-  el("thOk").value = state.settings.th_ok;
-  el("thWarn").value = state.settings.th_warn;
-  el("thStop").value = state.settings.th_stop;
-  modalBack.style.display = "flex";
-  modalBack.setAttribute("aria-hidden","false");
-}
-function closeModal(){
-  modalBack.style.display = "none";
-  modalBack.setAttribute("aria-hidden","true");
-}
+      // status + theme
+      const status = calcStatus(totalG);
+      applyStatusTheme(status.key);
+      elStatusMain.textContent = status.label;
+    }
 
-el("openSettings").addEventListener("click", openModal);
-el("closeSettings").addEventListener("click", closeModal);
-modalBack.addEventListener("click", (e)=>{
-  if(e.target === modalBack) closeModal();
-});
+    function calcStatus(totalG){
+      // 3段階
+      // ok: < warn, warn: >= warn && < stop, stop: >= stop
+      if(totalG >= settings.thStop){
+        return { key:"stop", label:"上限到達（これ以上は危険）" };
+      }
+      if(totalG >= settings.thWarn){
+        return { key:"warn", label:"注意（ここから先は危険域に近い）" };
+      }
+      return { key:"ok", label:"OK（まだ余裕）" };
+    }
 
-el("saveSettings").addEventListener("click", ()=>{
-  const rate = Number(el("setRate").value);
-  const thOk = Number(el("thOk").value);
-  const thWarn = Number(el("thWarn").value);
-  const thStop = Number(el("thStop").value);
+    function applyStatusTheme(statusKey){
+      document.body.dataset.status = statusKey; // ok / warn / stop
+      // theme-color も変える（Safari/ChromeのUI色が少し馴染む）
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if(meta){
+        const c = statusKey === "stop" ? "#1b0a0c" : (statusKey === "warn" ? "#1a1408" : "#071428");
+        meta.setAttribute("content", c);
+      }
+    }
 
-  if(!Number.isFinite(rate) || rate <= 0){
-    alert("分解速度（g/時）を正しく入力してください");
-    return;
-  }
-  // しきい値の整合性チェック（ゆるめ）
-  if(!(thOk <= thWarn && thWarn <= thStop)){
-    alert("しきい値は「適量 ≤ 注意 ≤ 上限」の順にしてください");
-    return;
-  }
+    function renderOneDrink(){
+      const d = DRINKS.find(x=>x.key===selectedDrinkKey);
+      const s = SIZES.find(x=>x.key===selectedSizeKey);
+      const g = pureAlcoholG(s.ml, d.abv);
+      elOneDrinkPill.textContent = `1杯のアルコール: ${g.toFixed(1)} g`;
+    }
 
-  state.settings.rate_g_per_h = Math.round(rate*10)/10;
-  state.settings.th_ok = Math.round(thOk);
-  state.settings.th_warn = Math.round(thWarn);
-  state.settings.th_stop = Math.round(thStop);
-  saveState();
+    function renderLogTable(){
+      const logs = getTodayLogs();
+      if(logs.length === 0){
+        elLogBody.innerHTML = `<tr><td colspan="5" class="muted">（no log）</td></tr>`;
+        return;
+      }
 
-  closeModal();
-  renderAll();
-});
+      let html = "";
+      for(let i=0; i<logs.length; i++){
+        const x = logs[i];
+        const t = new Date(x.ts);
+        const hm = fmtHM(t);
+        const drink = DRINKS.find(d=>d.key===x.drinkKey);
+        const size  = SIZES.find(s=>s.key===x.sizeKey);
 
-/** ====== Init ====== */
-renderAll();
-setInterval(renderTop, 15000); // 時刻系は定期更新
-</script>
+        let prev = "--";
+        if(i>0){
+          const prevTs = logs[i-1].ts;
+          const diffMin = Math.max(0, Math.round((x.ts - prevTs)/60000));
+          prev = `${diffMin}分`;
+        }
+
+        html += `
+          <tr>
+            <td>${hm}</td>
+            <td>${drink.emoji} ${drink.name} / ${size.key} (${x.ml}ml・${x.abv}%)</td>
+            <td class="right"><b>${x.g.toFixed(1)}</b> g</td>
+            <td class="center">${prev}</td>
+            <td class="center"><button class="miniBtn danger" data-del="${x.id}">削除</button></td>
+          </tr>
+        `;
+      }
+      elLogBody.innerHTML = html;
+
+      // bind delete
+      [...elLogBody.querySelectorAll("button[data-del]")].forEach(btn=>{
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-del");
+          deleteLogById(id);
+        };
+      });
+    }
+
+    function renderCalendar(){
+      // store cursor
+      localStorage.setItem(LS.calendarMonth, `${calCursor.getFullYear()}-${String(calCursor.getMonth()+1).padStart(2,"0")}`);
+
+      const y = calCursor.getFullYear();
+      const m = calCursor.getMonth(); // 0-based
+      elMonthLabel.textContent = `${y}年${m+1}月`;
+
+      // dow
+      const dows = ["日","月","火","水","木","金","土"];
+      elCalDow.innerHTML = dows.map(x=>`<div class="dow">${x}</div>`).join("");
+
+      // grid: start day
+      const first = new Date(y, m, 1);
+      const startDow = first.getDay();
+      const daysInMonth = new Date(y, m+1, 0).getDate();
+
+      // build cells with blanks
+      const cells = [];
+      for(let i=0;i<startDow;i++){
+        cells.push({ blank:true });
+      }
+      for(let d=1; d<=daysInMonth; d++){
+        const date = new Date(y, m, d);
+        const key = todayKey(date);
+        cells.push({ blank:false, key, d });
+      }
+
+      // render
+      elCalGrid.innerHTML = "";
+      cells.forEach(c=>{
+        if(c.blank){
+          const div = document.createElement("div");
+          div.style.visibility="hidden";
+          div.className="dayCell";
+          elCalGrid.appendChild(div);
+          return;
+        }
+
+        const dayLogs = logsByDay[c.key] || [];
+        const totalG = dayLogs.reduce((a,x)=>a+x.g,0);
+        const st = calcStatus(totalG);
+        const hang = hangoverByDay[c.key]; // 0..3 or undefined
+
+        // dot color by status
+        const dotColor = st.key==="stop" ? "rgba(255,59,48,.85)" : (st.key==="warn" ? "rgba(255,176,32,.85)" : (dayLogs.length ? "rgba(36,209,143,.85)" : "rgba(255,255,255,.08)"));
+
+        const div = document.createElement("div");
+        div.className = "dayCell";
+        div.innerHTML = `
+          <div class="dayNum">${c.d}</div>
+          <div class="badges">
+            <span class="dot" style="background:${dotColor}"></span>
+            ${Number.isFinite(hang) ? `<span class="badge">${hang}</span>` : ``}
+          </div>
+          <div class="dayFooter">${dayLogs.length ? `${totalG.toFixed(0)}g` : ""}</div>
+        `;
+        div.onclick = () => openHangoverModal(c.key);
+        elCalGrid.appendChild(div);
+      });
+    }
+
+    // ====== Actions ======
+    function addLog(){
+      const d = DRINKS.find(x=>x.key===selectedDrinkKey);
+      const s = SIZES.find(x=>x.key===selectedSizeKey);
+      const ts = Date.now();
+      const g = pureAlcoholG(s.ml, d.abv);
+
+      const item = {
+        id: `${ts}_${Math.random().toString(16).slice(2)}`,
+        ts,
+        drinkKey: d.key,
+        sizeKey: s.key,
+        ml: s.ml,
+        abv: d.abv,
+        g
+      };
+
+      const key = todayKey();
+      logsByDay[key] = logsByDay[key] || [];
+      logsByDay[key].push(item);
+      saveLogs(logsByDay);
+
+      lastAddedId = item.id;
+
+      refreshAll();
+    }
+
+    function undoLast(){
+      if(!lastAddedId) return;
+      deleteLogById(lastAddedId);
+      lastAddedId = null;
+    }
+
+    function deleteLogById(id){
+      const key = todayKey();
+      const logs = logsByDay[key] || [];
+      const idx = logs.findIndex(x=>x.id===id);
+      if(idx >= 0){
+        logs.splice(idx,1);
+        logsByDay[key] = logs;
+        saveLogs(logsByDay);
+        refreshAll();
+      }
+    }
+
+    function resetToday(){
+      const key = todayKey();
+      if(confirm("今日のログをすべてリセットしますか？")){
+        delete logsByDay[key];
+        saveLogs(logsByDay);
+        lastAddedId = null;
+        refreshAll();
+      }
+    }
+
+    function clearAllLogs(){
+      if(confirm("全ログ（今日のテーブル）を消去しますか？（今日のみ）")){
+        resetToday();
+      }
+    }
+
+    // ====== Hangover modal ======
+    function openHangoverModal(dayKey){
+      modalTargetDay = dayKey;
+      modalSelectedHangover = Number.isFinite(hangoverByDay[dayKey]) ? hangoverByDay[dayKey] : null;
+
+      elModalDate.textContent = fmtYMDJP(dayKey);
+
+      // build segments 0..3
+      const labels = ["0（なし）","1（軽い）","2（中）","3（重い）"];
+      elHangoverSeg.innerHTML = "";
+      for(let i=0;i<=3;i++){
+        const seg = document.createElement("div");
+        seg.className = "seg" + (modalSelectedHangover===i ? " selected" : "");
+        seg.textContent = labels[i];
+        seg.onclick = () => {
+          modalSelectedHangover = i;
+          [...elHangoverSeg.querySelectorAll(".seg")].forEach(x=>x.classList.remove("selected"));
+          seg.classList.add("selected");
+        };
+        elHangoverSeg.appendChild(seg);
+      }
+
+      modalBackdrop.style.display = "flex";
+    }
+    function closeHangoverModal(){
+      modalBackdrop.style.display = "none";
+      modalTargetDay = null;
+      modalSelectedHangover = null;
+    }
+
+    btnModalCancel.onclick = closeHangoverModal;
+    modalBackdrop.onclick = (e)=>{ if(e.target === modalBackdrop) closeHangoverModal(); };
+
+    btnModalSave.onclick = () => {
+      if(!modalTargetDay) return;
+      if(modalSelectedHangover === null){
+        alert("0〜3を選んでください。");
+        return;
+      }
+      hangoverByDay[modalTargetDay] = modalSelectedHangover;
+      saveHangover(hangoverByDay);
+      closeHangoverModal();
+      renderCalendar();
+    };
+
+    btnModalClear.onclick = () => {
+      if(!modalTargetDay) return;
+      delete hangoverByDay[modalTargetDay];
+      saveHangover(hangoverByDay);
+      closeHangoverModal();
+      renderCalendar();
+    };
+
+    // ====== Settings modal ======
+    function openSettings(){
+      inputThOk.value = settings.thOk;
+      inputThWarn.value = settings.thWarn;
+      inputThStop.value = settings.thStop;
+      inputRate.value = settings.rate;
+      inputNoteDrive.value = settings.noteDrive || "";
+      settingsBackdrop.style.display = "flex";
+    }
+    function closeSettings(){
+      settingsBackdrop.style.display = "none";
+    }
+    btnOpenSettings.onclick = openSettings;
+    btnSettingsCancel.onclick = closeSettings;
+    settingsBackdrop.onclick = (e)=>{ if(e.target === settingsBackdrop) closeSettings(); };
+
+    btnSettingsSave.onclick = () => {
+      const thOk = Number(inputThOk.value);
+      const thWarn = Number(inputThWarn.value);
+      const thStop = Number(inputThStop.value);
+      const rate = Number(inputRate.value);
+
+      if(!(thOk>=0 && thWarn>=0 && thStop>=0 && rate>0)){
+        alert("数値が不正です。");
+        return;
+      }
+      // 自然な並びに補正（OK <= WARN <= STOP）
+      const a = clamp(thOk, 0, 9999);
+      const b = clamp(thWarn, a, 9999);
+      const c = clamp(thStop, b, 9999);
+
+      settings = {
+        thOk: a,
+        thWarn: b,
+        thStop: c,
+        rate: clamp(rate, 1, 50),
+        noteDrive: String(inputNoteDrive.value || "")
+      };
+      saveSettings(settings);
+      closeSettings();
+      refreshAll();
+    };
+
+    // ====== Calendar controls ======
+    btnPrevMonth.onclick = () => { calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth()-1, 1); renderCalendar(); };
+    btnNextMonth.onclick = () => { calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth()+1, 1); renderCalendar(); };
+    btnThisMonth.onclick = () => {
+      const now = new Date();
+      calCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderCalendar();
+    };
+
+    // ====== Bind ======
+    btnAdd.onclick = addLog;
+    btnUndo.onclick = undoLast;
+    btnResetToday.onclick = resetToday;
+    btnClearLog.onclick = clearAllLogs;
+
+    // ====== Refresh ======
+    function refreshAll(){
+      renderTop();
+      renderOneDrink();
+      renderLogTable();
+      renderCalendar();
+    }
+
+    // Tick updates (elapsed/finish time)
+    setInterval(()=> {
+      renderTop();
+    }, 15000);
+
+    // ====== Init ======
+    function init(){
+      renderDrinkTiles();
+      renderSizeTiles();
+      refreshAll();
+
+      // PWA service worker (既存sw.jsがある場合のみ)
+      if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("./sw.js").catch(()=>{});
+      }
+    }
+    init();
+  </script>
 </body>
 </html>
-
